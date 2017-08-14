@@ -565,7 +565,7 @@ function cleanSingleHeader(e) {
 
 function prepArticle(articleContent) {
   cleanStyles(articleContent);
-  killBreaks(articleContent);
+  // killBreaks(articleContent);
 
   /* Clean out junk from the article content */
   clean(articleContent, 'form');

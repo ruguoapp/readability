@@ -205,10 +205,12 @@ function read(html, options, callback) {
   }
 
   var overrideEncoding = options.encoding,
-      preprocess = options.preprocess;
+      preprocess = options.preprocess,
+      baseUrl = options.baseUrl;
 
   options.encoding = null;
   delete options.preprocess;
+  delete options.baseUrl;
 
   var parsedURL = urllib.parse(html);
   if (['http:', 'https:', 'unix:', 'ftp:', 'sftp:'].indexOf(parsedURL.protocol) === -1) {
@@ -254,7 +256,9 @@ function read(html, options, callback) {
     jsdom.env({
       html: body,
       done: function(errors, window) {
-        if (meta) {
+        if (baseUrl) {
+          window.document.originalURL = baseUrl;
+        } else if (meta) {
           window.document.originalURL = meta.request.uri.href;
         } else {
           window.document.originalURL = null;

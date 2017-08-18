@@ -79,7 +79,7 @@ Readability.prototype.getTitle = function(notDeprecated) {
     return this.cache['article-title'];
   }
 
-  var title = _findMetaTitle(this._document) || this._document.title;
+  var title = _findTitle(this._document);
   var betterTitle;
   var commonSeparatingCharacters = [' | ', ' _ ', ' - ', '«', '»', '—', '_', '-'];
 
@@ -137,6 +137,20 @@ Readability.prototype.getHTML = function(notDeprecated) {
   }
   return this._document.getElementsByTagName('html')[0].innerHTML;
 };
+
+function _findTitle(document) {
+  var headingTags = ['h1', 'h2'];
+  for (var i = 0; i < headingTags.length; i++) {
+    var tags = document.getElementsByTagName(headingTags[i]);
+    if (tags.length == 1) {
+      var text = helpers.getInnerText(tags[0]).trim();
+      if (text) {
+        return text;
+      }
+    }
+  }
+  return _findMetaTitle(document) || document.title;
+}
 
 function _findMetaTitle(document) {
   var metaTags = document.getElementsByTagName('meta');

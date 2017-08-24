@@ -60,7 +60,7 @@ Readability.prototype.getContent = function(notDeprecated) {
   }
 
   var articleContent = helpers.grabArticle(this._document);
-  var title = _findTitle(articleContent, true)
+  var title = _findTitle(articleContent)
   if (title && !this.cache['article-title']) {
     this.cache['article-title'] = title;
   }
@@ -145,23 +145,40 @@ Readability.prototype.getHTML = function(notDeprecated) {
   return this._document.getElementsByTagName('html')[0].innerHTML;
 };
 
-function _findTitle(container, remove) {
+function _isFirstNodeWithText(node) {
+  while (node.previousSibling) {
+    node = node.previousSibling;
+    if (node.nodeType == node.TEXT_NODE || node.nodeType == node.ELEMENT_NODE) {
+      if (node.textContent.trim()) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function _findTitle(container) {
+  var isDocument = container.nodeType === container.DOCUMENT_NODE
   var title = '';
   var headingTags = ['h1', 'h2'];
   for (var i = 0; i < headingTags.length; i++) {
     var tags = container.getElementsByTagName(headingTags[i]);
     if (tags.length == 1) {
       var tag = tags[0];
+      var isFirstTextNode = _isFirstNodeWithText(tag);
+      if (!isDocument && !isFirstTextNode) {
+        continue;
+      }
       var text = helpers.getInnerText(tag).trim();
-      if (text.length >= 10 && !title) {
+      if (!title && ((!isDocument && isFirstTextNode) || text.length >= 10)) {
         title = text;
       }
-      if (remove) {
+      if (!isDocument) {
         tag.parentNode.removeChild(tag);
       }
     }
   }
-  return title
+  return title;
 }
 
 function _findMetaTitle(document) {

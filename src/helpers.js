@@ -4,7 +4,7 @@ var url = require("url");
 var regexps = {
   unlikelyCandidatesRe: /combx|modal|comment|disqus|foot|header|menu|meta|nav|rss|shoutbox|sidebar|sponsor|social|teaserlist|time|tweet|twitter|pagination|wx_pic/i,
   okMaybeItsACandidateRe: /and|article|body|column|main|story|entry|^post/im,
-  positiveRe: /article|body|content|entry|hentry|page|pagination|post|section|chapter|description|main|blog|text|photo/i,
+  positiveRe: /article|body|content|entry|hentry|page|pagination|post|section|chapter|description|main|blog|text|photo|title/i,
   negativeRe: /combx|comment|contact|foot|footer|footnote|link|meta|promo|related|scroll|shoutbox|sponsor|utility|tags|widget|share/i,
   divToPElementsRe: /<(a|blockquote|dl|div|img|ol|p|pre|table|ul)/i,
   replaceBrsRe: /(<br[^>]*>[ \n\r\t]*){2,}/gi,

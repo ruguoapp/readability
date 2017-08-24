@@ -153,7 +153,7 @@ function _findTitle(container, remove) {
     if (tags.length == 1) {
       var tag = tags[0];
       var text = helpers.getInnerText(tag).trim();
-      if (text && !title) {
+      if (text.length >= 10 && !title) {
         title = text;
       }
       if (remove) {

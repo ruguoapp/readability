@@ -570,15 +570,6 @@ function prepArticle(articleContent) {
   /* Clean out junk from the article content */
   clean(articleContent, 'form');
   clean(articleContent, 'object');
-  if (articleContent.getElementsByTagName('h1').length === 1) {
-    clean(articleContent, 'h1');
-  }
-  /**
-   * If there is only one h2, they are probably using it
-   * as a header and not a subheader, so remove it since we already have a header.
-   ***/
-  if (articleContent.getElementsByTagName('h2').length === 1) clean(articleContent, "h2");
-
   clean(articleContent, "iframe");
 
   cleanHeaders(articleContent);

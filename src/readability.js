@@ -3,6 +3,7 @@ var request = require('request');
 var helpers = require('./helpers');
 var encodinglib = require("encoding");
 var urllib = require('url');
+var countWord = require('word-count');
 
 exports.debug = function(debug) {
   helpers.debug(debug);
@@ -99,7 +100,7 @@ Readability.prototype.getTitle = function(notDeprecated) {
     }
   });
 
-  if (betterTitle && betterTitle.length > 10) {
+  if (betterTitle && countWord(betterTitle) > 10) {
     return this.cache['article-title'] = betterTitle;
   }
 
@@ -170,7 +171,7 @@ function _findTitle(container) {
         continue;
       }
       var text = helpers.getInnerText(tag).trim();
-      if (!title && ((!isDocument && isFirstTextNode) || text.length >= 10)) {
+      if (!title && ((!isDocument && isFirstTextNode) || countWord(text) > 10)) {
         title = text;
       }
       if (!isDocument) {

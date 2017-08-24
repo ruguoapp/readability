@@ -81,7 +81,7 @@ Readability.prototype.getTitle = function(notDeprecated) {
     console.warn('The method `getTitle()` is deprecated, using `title` property instead.');
   }
   // process article first
-  this.getContent()
+  this.getContent(true)
   if (typeof this.cache['article-title'] !== 'undefined') {
     return this.cache['article-title'];
   }

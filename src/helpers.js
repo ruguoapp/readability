@@ -478,6 +478,8 @@ function cleanConditionally(e, tag) {
         toRemove = true;
       } else if (input > Math.floor(p / 3)) {
         toRemove = true;
+      } else if (contentLength > 500) {
+        toRemove = false;
       } else if (contentLength < 25 && (img == 0 || img > 2)) {
         toRemove = true;
       } else if (weight < 25 && linkDensity > .2) {
@@ -566,13 +568,12 @@ function cleanSingleHeader(e) {
 function prepArticle(articleContent) {
   cleanStyles(articleContent);
   // killBreaks(articleContent);
-
   /* Clean out junk from the article content */
   clean(articleContent, 'form');
   clean(articleContent, 'object');
   clean(articleContent, "iframe");
 
-  cleanHeaders(articleContent);
+  // cleanHeaders(articleContent);
 
   /* Do these last as the previous stuff may have removed junk that will affect these */
   cleanConditionally(articleContent, "table");

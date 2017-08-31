@@ -100,40 +100,42 @@ var grabArticle = module.exports.grabArticle = function(document, preserveUnlike
     if (!preserveUnlikelyCandidates) {
       var unlikelyMatchString = node.className + '\n' + node.id;
       if (unlikelyMatchString.search(regexps.unlikelyCandidatesRe) !== -1 && unlikelyMatchString.search(regexps.okMaybeItsACandidateRe) == -1 && node.tagName !== 'HTML' && node.tagName !== "BODY") {
-        dbg("Removing unlikely candidate - " + unlikelyMatchString);
+        dbg("Removing unlikely candidate - " + formatNode(node));
         node.parentNode.removeChild(node);
         continueFlag = true;
       }
     }
 
+    if (continueFlag || node.tagName !== 'DIV') {
+      continue;
+    }
+
     // Turn all divs that don't have children block level elements into p's
-    if (!continueFlag && node.tagName === 'DIV') {
-      if (node.innerHTML.search(regexps.divToPElementsRe) === -1) {
-        dbg("Altering div to p");
-        var newNode = document.createElement('p');
-        newNode.innerHTML = node.innerHTML;
-        node.parentNode.replaceChild(newNode, node);
-      } else {
-        // EXPERIMENTAL
-        Array.prototype.slice.call(node.childNodes).forEach(function(childNode) {
-          if (childNode.nodeType == 3 /*TEXT_NODE*/ ) {
-            var nextSibling = childNode.nextSibling
-            if (nextSibling && nextSibling.tagName == 'BR') {
-              dbg("replacing text node followed by br with a p tag with the same content.");
-              var p = document.createElement('p');
-              p.innerHTML = childNode.nodeValue;
-              childNode.parentNode.removeChild(nextSibling)
-              childNode.parentNode.replaceChild(p, childNode);
-            } else {
-              // use span instead of p. Need more tests.
-              dbg("replacing text node with a span tag with the same content.");
-              var span = document.createElement('span');
-              span.innerHTML = childNode.nodeValue;
-              childNode.parentNode.replaceChild(span, childNode);
-            }
+    if (node.innerHTML.search(regexps.divToPElementsRe) === -1) {
+      dbg("Altering div to p " + formatNode(node));
+      var newNode = document.createElement('p');
+      newNode.innerHTML = node.innerHTML;
+      node.parentNode.replaceChild(newNode, node);
+    } else {
+      // EXPERIMENTAL
+      Array.prototype.slice.call(node.childNodes).forEach(function(childNode) {
+        if (childNode.nodeType == 3 && childNode.textContent /*TEXT_NODE*/ ) {
+          var nextSibling = childNode.nextSibling
+          if (nextSibling && nextSibling.tagName == 'BR') {
+            dbg("Replacing text node followed by br with a p tag with the same content.");
+            var p = document.createElement('p');
+            p.innerHTML = childNode.nodeValue;
+            childNode.parentNode.removeChild(nextSibling)
+            childNode.parentNode.replaceChild(p, childNode);
+          } else {
+            // use span instead of p. Need more tests.
+            dbg("Replacing text node with a span tag with the same content.");
+            var span = document.createElement('span');
+            span.innerHTML = childNode.nodeValue;
+            childNode.parentNode.replaceChild(span, childNode);
           }
-        });
-      }
+        }
+      });
     }
   }
 
@@ -156,27 +158,21 @@ var grabArticle = module.exports.grabArticle = function(document, preserveUnlike
     // If this paragraph is less than 25 characters, don't even count it.
     if (wordCount < 5) continue;
 
-    // Initialize readability data for the parent.
-    if (typeof parentNode.readability == 'undefined') {
-      initializeNode(parentNode);
-      candidates.push(parentNode);
-    }
-
-    // Initialize readability data for the grandparent.
-    if (typeof grandParentNode.readability == 'undefined') {
-      initializeNode(grandParentNode);
-      candidates.push(grandParentNode);
-    }
-
-    var contentScore = 0;
+    [parentNode, grandParentNode].forEach(function(node) {
+      // Initialize readability data
+      if (typeof node.readability == 'undefined') {
+        initializeNode(node);
+        candidates.push(node);
+      }
+    })
 
     // Add a point for the paragraph itself as a base. */
-    ++contentScore;
+    var contentScore = 1;
 
     // Add points for any commas within this paragraph */
     contentScore += innerText.replace('，', ',').split(',').length;
 
-    // For every 100 characters in this paragraph, add another point. Up to 3 points. */
+    // For every 20 words in this paragraph, add another point. Up to 3 points. */
     contentScore += Math.min(Math.floor(wordCount / 20), 3);
 
     // Add the score to the parent. The grandparent gets half. */
@@ -202,6 +198,7 @@ var grabArticle = module.exports.grabArticle = function(document, preserveUnlike
       topCandidate = candidate;
     }
   });
+
 
   /**
    * If we still have no top candidate, just use the body as a last resort.
@@ -377,21 +374,11 @@ function getLinkDensity(e) {
  **/
 function getClassWeight(e) {
   var weight = 0;
-
-  /* Look for a special classname */
-  if (e.className !== '') {
-    if (e.className.search(regexps.negativeRe) !== -1) weight -= 25;
-
-    if (e.className.search(regexps.positiveRe) !== -1) weight += 25;
-  }
-
-  /* Look for a special ID */
-  if (typeof(e.id) == 'string' && e.id != "") {
-    if (e.id.search(regexps.negativeRe) !== -1) weight -= 25;
-
-    if (e.id.search(regexps.positiveRe) !== -1) weight += 25;
-  }
-
+  ['id', 'className'].forEach(function(attr) {
+    var value = e[attr];
+    if (value && value.search(regexps.positiveRe) !== -1) weight += 25;
+    if (value && value.search(regexps.negativeRe) !== -1) weight -= 25;
+  });
   return weight;
 }
 
@@ -476,7 +463,7 @@ function cleanConditionally(e, tag) {
       }
 
       var linkDensity = getLinkDensity(tagsList[i]);
-      var contentLength = getInnerText(tagsList[i]).length;
+      var contentLength = countWord(getInnerText(tagsList[i]));
       var toRemove = false;
 
       if (img > p && img > 1) {
@@ -487,7 +474,7 @@ function cleanConditionally(e, tag) {
         toRemove = true;
       } else if (contentLength > 500) {
         toRemove = false;
-      } else if (contentLength < 25 && (img == 0 || img > 2)) {
+      } else if (contentLength < 10 && (img == 0 || img > 2)) {
         toRemove = true;
       } else if (weight < 25 && linkDensity > .2) {
         toRemove = true;

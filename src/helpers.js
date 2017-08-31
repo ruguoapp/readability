@@ -1,4 +1,5 @@
 var url = require("url");
+var countWord = require('word-count');
 
 // All of the regular expressions in use within readability.
 var regexps = {
@@ -150,9 +151,10 @@ var grabArticle = module.exports.grabArticle = function(document, preserveUnlike
     var parentNode = paragraph.parentNode;
     var grandParentNode = parentNode.parentNode;
     var innerText = getInnerText(paragraph);
+    var wordCount = countWord(innerText);
 
     // If this paragraph is less than 25 characters, don't even count it.
-    if (innerText.length < 25) continue;
+    if (wordCount < 5) continue;
 
     // Initialize readability data for the parent.
     if (typeof parentNode.readability == 'undefined') {
@@ -175,7 +177,7 @@ var grabArticle = module.exports.grabArticle = function(document, preserveUnlike
     contentScore += innerText.replace('，', ',').split(',').length;
 
     // For every 100 characters in this paragraph, add another point. Up to 3 points. */
-    contentScore += Math.min(Math.floor(innerText.length / 100), 3);
+    contentScore += Math.min(Math.floor(wordCount / 20), 3);
 
     // Add the score to the parent. The grandparent gets half. */
     parentNode.readability.contentScore += contentScore;
@@ -194,10 +196,11 @@ var grabArticle = module.exports.grabArticle = function(document, preserveUnlike
      * relatively small link density (5% or less) and be mostly unaffected by this operation.
      **/
     candidate.readability.contentScore = candidate.readability.contentScore * (1 - getLinkDensity(candidate));
+    dbg('Candidate: ' + formatNode(candidate) + ' with score ' + candidate.readability.contentScore);
 
-    dbg('Candidate: ' + candidate + " (" + candidate.className + ":" + candidate.id + ") with score " + candidate.readability.contentScore);
-
-    if (!topCandidate || candidate.readability.contentScore > topCandidate.readability.contentScore) topCandidate = candidate;
+    if (!topCandidate || candidate.readability.contentScore > topCandidate.readability.contentScore) {
+      topCandidate = candidate;
+    }
   });
 
   /**
@@ -216,6 +219,7 @@ var grabArticle = module.exports.grabArticle = function(document, preserveUnlike
     initializeNode(topCandidate);
   }
 
+  dbg('Top candidate: ' + formatNode(topCandidate));
 
   /**
    * Now that we have the top candidate, look through its siblings for content that might also be related.
@@ -227,23 +231,25 @@ var grabArticle = module.exports.grabArticle = function(document, preserveUnlike
   var siblingNodes = topCandidate.parentNode.childNodes;
   for (var i = 0, il = siblingNodes.length; i < il; i++) {
     var siblingNode = siblingNodes[i];
+    var score = siblingNode.readability ? siblingNode.readability.contentScore : 0;
     var append = false;
-
-    dbg('Looking at sibling node: ' + siblingNode + ' (' + siblingNode.className + ':' + siblingNode.id + ')' + ((typeof siblingNode.readability != 'undefined') ? (' with score ' + siblingNode.readability.contentScore) : ''));
-    dbg('Sibling has score ' + (siblingNode.readability ? siblingNode.readability.contentScore : 'Unknown'));
 
     if (siblingNode === topCandidate) {
       append = true;
+    } else {
+      dbg('Looking at sibling node: ' + formatNode(siblingNode) + ' with score ' + score);
     }
 
-    if (typeof siblingNode.readability != 'undefined' && siblingNode.readability.contentScore >= siblingScoreThreshold) {
+    if (score >= siblingScoreThreshold) {
+      append = true;
+    } else if (siblingNode.nodeName == 'BLOCKQUOTE') {
       append = true;
     }
 
     if (siblingNode.nodeName == 'P') {
       var linkDensity = getLinkDensity(siblingNode);
       var nodeContent = getInnerText(siblingNode);
-      var nodeLength = nodeContent.length;
+      var nodeLength = countWord(nodeContent);
 
       if (nodeLength > 80 && linkDensity < 0.25) {
         append = true;
@@ -252,8 +258,12 @@ var grabArticle = module.exports.grabArticle = function(document, preserveUnlike
       }
     }
 
+    if (siblingNode.className && siblingNode.className === topCandidate.className) {
+      append = true;
+    }
+
     if (append) {
-      dbg("Appending node: " + siblingNode);
+      dbg("Appending node: " + formatNode(siblingNode));
 
       /* Append sibling and subtract from our list because it removes the node when you append to another node */
       articleContent.appendChild(siblingNode);
@@ -266,7 +276,6 @@ var grabArticle = module.exports.grabArticle = function(document, preserveUnlike
    * So we have all of the content that we need. Now we clean it up for presentation.
    **/
   prepArticle(articleContent);
-
   return articleContent;
 };
 
@@ -445,8 +454,6 @@ function cleanConditionally(e, tag) {
   for (var i = curTagsLength - 1; i >= 0; i--) {
     var weight = getClassWeight(tagsList[i]);
 
-    dbg("Cleaning Conditionally " + tagsList[i] + " (" + tagsList[i].className + ":" + tagsList[i].id + ")" + ((typeof tagsList[i].readability != 'undefined') ? (" with score " + tagsList[i].readability.contentScore) : ''));
-
     if (weight < 0) {
       tagsList[i].parentNode.removeChild(tagsList[i]);
     } else if (getCharCount(tagsList[i], ',') < 10) {
@@ -489,6 +496,8 @@ function cleanConditionally(e, tag) {
       } else if ((embedCount == 1 && contentLength < 75) || embedCount > 1) {
         toRemove = true;
       }
+
+      dbg("Cleaning Conditionally " + formatNode(tagsList[i]) + ", remove? " + toRemove)
 
       if (toRemove) {
         tagsList[i].parentNode.removeChild(tagsList[i]);
@@ -663,4 +672,8 @@ function initializeNode(node) {
   }
 
   node.readability.contentScore += getClassWeight(node);
+}
+
+function formatNode(node) {
+  return node + ' (' + node.className + ':' + node.id + ')'
 }

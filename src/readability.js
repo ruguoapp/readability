@@ -20,6 +20,10 @@ function Readability(window, options) {
   this._articleContent = '';
   helpers.setCleanRules(options.cleanRulers || []);
 
+  if (options.debug !== undefined) {
+    exports.debug(options.debug)
+  }
+
   this.cache = {};
 
   helpers.prepDocument(this._document);

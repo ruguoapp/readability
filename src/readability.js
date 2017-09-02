@@ -175,10 +175,13 @@ function _findTitle(container) {
         continue;
       }
       var text = helpers.getInnerText(tag).trim();
-      if (!title && ((!isDocument && isFirstTextNode) || countWord(text) > 10)) {
-        title = text;
+      var wordCount = countWord(text)
+      if (!title && ((!isDocument && isFirstTextNode) || wordCount > 10)) {
+        if (wordCount < 50) {
+          title = text;
+        }
       }
-      if (!isDocument) {
+      if (!isDocument && wordCount < 50) {
         tag.parentNode.removeChild(tag);
       }
     }

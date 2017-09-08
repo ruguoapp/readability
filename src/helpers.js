@@ -120,12 +120,23 @@ var grabArticle = module.exports.grabArticle = function(document, preserveUnlike
       // EXPERIMENTAL
       Array.prototype.slice.call(node.childNodes).forEach(function(childNode) {
         if (childNode.nodeType == 3 && childNode.textContent /*TEXT_NODE*/ ) {
-          var nextSibling = childNode.nextSibling
+          var prevSibling = childNode.previousSibling;
+          var nextSibling = childNode.nextSibling;
           if (nextSibling && nextSibling.tagName == 'BR') {
             dbg("Replacing text node followed by br with a p tag with the same content.");
             var p = document.createElement('p');
             p.innerHTML = childNode.nodeValue;
-            childNode.parentNode.removeChild(nextSibling)
+            while (prevSibling) {
+              var tmp = prevSibling.prevSibling
+              var display = document.defaultView.getComputedStyle(prevSibling).display;
+              if (display !== 'block') {
+                p.insertBefore(prevSibling, p.childNodes[0])
+                prevSibling = tmp
+              } else {
+                break
+              }
+            }
+            childNode.parentNode.removeChild(nextSibling);
             childNode.parentNode.replaceChild(p, childNode);
           } else {
             // use span instead of p. Need more tests.

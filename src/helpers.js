@@ -567,18 +567,39 @@ function cleanSingleHeader(e) {
       }
     }
   }
+}
 
+function cleanJunksBeforeTitle(container) {
+  var h1s = container.getElementsByTagName('h1');
+  if (h1s.length !== 1) {
+    return;
+  }
+  var h1 = h1s[0];
+  if (countWord(getInnerText(h1)) <= 10) {
+    return;
+  }
+
+  function removeElementsUntil(startNode, untilNode) {
+    if (startNode == untilNode) {
+      return;
+    }
+    if (!startNode.previousSibling) {
+      return removeElementsUntil(startNode.parentNode, untilNode);
+    }
+    dbg('Remove junks before title: ' + formatNode(startNode.previousSibling));
+    startNode.parentNode.removeChild(startNode.previousSibling);
+    removeElementsUntil(startNode, untilNode);
+  }
+
+  removeElementsUntil(h1, container.childNodes[0]);
 }
 
 function prepArticle(articleContent) {
   cleanStyles(articleContent);
-  // killBreaks(articleContent);
   /* Clean out junk from the article content */
   clean(articleContent, 'form');
   clean(articleContent, 'object');
   clean(articleContent, "iframe");
-
-  // cleanHeaders(articleContent);
 
   /* Do these last as the previous stuff may have removed junk that will affect these */
   cleanConditionally(articleContent, "table");
@@ -597,6 +618,7 @@ function prepArticle(articleContent) {
   }
 
   cleanSingleHeader(articleContent);
+  cleanJunksBeforeTitle(articleContent);
 
   try {
     articleContent.innerHTML = articleContent.innerHTML.replace(/<br[^>]*>\s*<p/gi, '<p');

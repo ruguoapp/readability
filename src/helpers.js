@@ -13,7 +13,7 @@ var regexps = {
   trimRe: /^\s+|\s+$/g,
   normalizeRe: /\s{2,}/g,
   killBreaksRe: /(<br\s*\/?>(\s|&nbsp;?)*){1,}/g,
-  videoRe: /http:\/\/(www\.)?(youtube|vimeo|youku|tudou|56|yinyuetai)\.com/i,
+  videoRe: /https?:\/\/((www|v)\.)?(youtube|vimeo|youku|tudou|56|yinyuetai|qq)\.com/i,
   attributeRe: /blog|post|article/i
 };
 
@@ -403,9 +403,7 @@ function getClassWeight(e) {
  **/
 function clean(e, tag) {
   var targetList = e.getElementsByTagName(tag);
-  var isEmbed = (tag == 'object' || tag == 'embed');
-
-
+  var isEmbed = (tag == 'object' || tag == 'embed' || tag == 'iframe');
 
   for (var y = targetList.length - 1; y >= 0; y--) {
     //------- user clean handler -----------------
@@ -424,7 +422,7 @@ function clean(e, tag) {
 
     /* Allow youtube and vimeo videos through as people usually want to see those. */
     if (isEmbed) {
-      if (targetList[y].innerHTML.search(regexps.videoRe) !== -1) {
+      if (targetList[y].outerHTML.search(regexps.videoRe) !== -1) {
         continue;
       }
     }
@@ -590,11 +588,10 @@ function prepArticle(articleContent) {
   /* Remove extra paragraphs */
   var articleParagraphs = articleContent.getElementsByTagName('p');
   for (var i = articleParagraphs.length - 1; i >= 0; i--) {
-    var imgCount = articleParagraphs[i].getElementsByTagName('img').length;
-    var embedCount = articleParagraphs[i].getElementsByTagName('embed').length;
-    var objectCount = articleParagraphs[i].getElementsByTagName('object').length;
-
-    if (imgCount == 0 && embedCount == 0 && objectCount == 0 && getInnerText(articleParagraphs[i], false) == '') {
+    var mediaCount = ['img', 'embed', 'object', 'iframe'].reduce(function(sum, tag) {
+      return sum + articleParagraphs[i].getElementsByTagName(tag).length;
+    }, 0);
+    if (mediaCount == 0 && getInnerText(articleParagraphs[i], false) == '') {
       articleParagraphs[i].parentNode.removeChild(articleParagraphs[i]);
     }
   }

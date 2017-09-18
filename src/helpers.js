@@ -5,6 +5,7 @@ var countWord = require('word-count');
 var regexps = {
   unlikelyCandidatesRe: /combx|modal|comment|disqus|foot|header|menu|meta|nav|rss|shoutbox|sidebar|sponsor|social|teaserlist|time|tweet|twitter|pagination|wx_pic/i,
   okMaybeItsACandidateRe: /and|article|body|column|main|story|entry|^post/im,
+  unlikelyTags: ['select'],
   positiveRe: /article|body|content|entry|hentry|page|pagination|post|section|chapter|description|main|blog|text|photo|title/i,
   negativeRe: /combx|comment|contact|foot|footer|footnote|link|meta|promo|related|scroll|shoutbox|sponsor|utility|tags|widget|share|ratings/i,
   divToPElementsRe: /<(a|blockquote|dl|div|img|ol|p|pre|table|ul)/i,
@@ -95,6 +96,11 @@ var grabArticle = module.exports.grabArticle = function(document, preserveUnlike
   var nodes = document.getElementsByTagName('*');
   for (var i = 0; i < nodes.length; ++i) {
     var node = nodes[i];
+    if (regexps.unlikelyTags.indexOf(node.tagName.toLowerCase()) !== -1) {
+      dbg("Removing unlikely candidate by tag " + formatNode(node));
+      node.parentNode.removeChild(node);
+      continue;
+    }
     // Remove unlikely candidates */
     var continueFlag = false;
     if (!preserveUnlikelyCandidates) {

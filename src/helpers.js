@@ -460,7 +460,7 @@ function cleanConditionally(e, tag) {
 
       var p = tagsList[i].getElementsByTagName("p").length;
       var img = tagsList[i].getElementsByTagName("img").length;
-      var li = tagsList[i].getElementsByTagName("li").length - 100;
+      var li = tagsList[i].getElementsByTagName("li").length;
       var input = tagsList[i].getElementsByTagName("input").length;
 
       var embedCount = 0;
@@ -477,13 +477,13 @@ function cleanConditionally(e, tag) {
 
       if (img > p && img > 1) {
         toRemove = true;
-      } else if (li > p && tag != "ul" && tag != "ol") {
+      } else if (li - 100 > p && tag != "ul" && tag != "ol") {
         toRemove = true;
       } else if (input > Math.floor(p / 3)) {
         toRemove = true;
       } else if (contentLength > 500) {
         toRemove = false;
-      } else if (contentLength < 10 && (img == 0 || img > 2)) {
+      } else if (contentLength < 10 && (img == 0 || img > 2) && li < 2) {
         toRemove = true;
       } else if (weight < 25 && linkDensity > .2) {
         toRemove = true;

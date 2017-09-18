@@ -5,11 +5,7 @@ var encodinglib = require("encoding");
 var urllib = require('url');
 var countWord = require('word-count');
 
-exports.debug = function(debug) {
-  helpers.debug(debug);
-};
-
-exports.debug(false);
+helpers.debug(['*', 'readability'].indexOf(process.env.DEBUG) !== -1);
 
 function Readability(window, options) {
   this._window = window;

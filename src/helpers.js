@@ -14,7 +14,7 @@ var regexps = {
   trimRe: /^\s+|\s+$/g,
   normalizeRe: /\s{2,}/g,
   killBreaksRe: /(<br\s*\/?>(\s|&nbsp;?)*){1,}/g,
-  videoRe: /https?:\/\/((www|v|player)\.)?(youtube|vimeo|youku|tudou|56|yinyuetai|qq)\.com/i,
+  videoRe: /(http?:)?\/\/((www|v|player)\.)?(youtube|vimeo|youku|tudou|56|yinyuetai|qq|bilibili)\.com/i,
   attributeRe: /blog|post|article/i
 };
 

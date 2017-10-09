@@ -481,15 +481,13 @@ function cleanConditionally(e, tag) {
       var contentLength = countWord(getInnerText(tagsList[i]));
       var toRemove = false;
 
-      if (img > p && img > 1) {
-        toRemove = true;
-      } else if (li - 100 > p && tag != "ul" && tag != "ol") {
+      if (li - 100 > p && tag != "ul" && tag != "ol") {
         toRemove = true;
       } else if (input > Math.floor(p / 3)) {
         toRemove = true;
       } else if (contentLength > 500) {
         toRemove = false;
-      } else if (contentLength < 10 && (img == 0 || img > 2) && li < 2) {
+      } else if (contentLength < 10 && img == 0 && li < 2) {
         toRemove = true;
       } else if (weight < 25 && linkDensity > .2) {
         toRemove = true;

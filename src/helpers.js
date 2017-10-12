@@ -134,7 +134,11 @@ var grabArticle = module.exports.grabArticle = function(document, preserveUnlike
             p.innerHTML = childNode.nodeValue;
             while (prevSibling) {
               var tmp = prevSibling.prevSibling
-              var display = document.defaultView.getComputedStyle(prevSibling).display;
+              try {
+                var display = document.defaultView.getComputedStyle(prevSibling).display;
+              } catch (err) {
+                var display = undefined;
+              }
               if (display !== 'block') {
                 p.insertBefore(prevSibling, p.childNodes[0])
                 prevSibling = tmp
